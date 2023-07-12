@@ -3,6 +3,10 @@ import tarfile
 import tempfile
 import datetime
 import gnupg
+import boto3
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def archive_and_compress(name, source_path):
@@ -26,3 +30,21 @@ def encrypt_file(source_path, key_fingerprint):
         raise Exception(encrypted_data.status)
 
     return save_path
+
+
+def instantiate_s3():
+    return boto3.client(
+        "s3",
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        endpoint_url=os.getenv("AWS_ENDPOINT_URL")
+    )
+
+
+def list_buckets(s3):
+    print(s3.list_buckets())
+
+
+def upload_to_s3(s3, bucket_name, archive_path):
+    archive = open(archive_path, "rb")
+    s3.upload_fileobj(archive, bucket_name, os.path.basename(archive_path))
